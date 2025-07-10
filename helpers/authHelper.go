@@ -1,11 +1,24 @@
-package routes
+package helpers
 
 import (
-"github.com/gin-gonic/gin"
-controller "experiment-golang-jwt-projct/controllers"
+	"errors"
+	"os/user"
+
+	"github.com/gin-gonic/gin"
 )
 
-func AuthRoutes(incoming Routes  *gin.Engine){
-	incomingRoutes.POST("users/signup",controller.Signup())
-	incomingRoutes.POST("user/login",controller.Login())
+func MatchUserTypeToUid(c, *gin.cContext ,userId string)(err error){
+	userType := c.GetString("user_type")
+	uid := c.GetString("uid")
+	err = nil
+
+	if userType == "USER" && uid!=  userId{
+		err = errors.New("Unauthorized to access this resource")
+		return err
+	}
+
+err = 	CheckUserType(c, userType)
+return err
+
+
 }
