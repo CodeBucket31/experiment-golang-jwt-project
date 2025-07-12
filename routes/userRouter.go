@@ -1,7 +1,7 @@
 package routes
 
 import (
-	controller "experiment-golang-jwt-projct/controllers"
+	controller "github.com/sonu31/experiment-golang-jwt-projct/controllers"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sonu31/experiment-golang-jwt-projct/middleware"

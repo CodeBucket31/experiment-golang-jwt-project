@@ -7,11 +7,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/sonu31/experiment-golang-jwt-projct/database"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type SignedDetailes struct {
@@ -20,7 +21,8 @@ type SignedDetailes struct {
 	Last_name  string
 	Uid        string
 	User_Type  string
-	jwt.StandardClaims
+	// jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 var userCollection *mongo.Collection = database.OpenCollection(database.Client, "user")
@@ -34,39 +36,44 @@ func GenerateAllTokens(email string, firstName string, lastName string, usertype
 		First_name: firstName,
 		Last_name:  lastName,
 		Uid:        uid,
-		User_Type:  userusertype,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(24)).Unix(),
+		User_Type:  usertype,
+		// StandardClaims: jwt.StandardClaims{
+		// 	ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(24)).Unix(),
+		// },
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
 	}
-	refreshClains := &SignedDetails{
+	// refreshClains := &SignedDetails{
 
-		StandardClaims: jwt.StandaredClaims{
-			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(169)).Unix(),
+	// StandardClaims: jwt.StandaredClaims{
+	// 	ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(169)).Unix(),
+	// },
+	// }
+
+	refreshClaims := &SignedDetailes{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(168 * time.Hour)), // 7 days
 		},
 	}
 
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(SECRET_KEY))
-	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]bype(SECRET_Key))
+	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]byte(SECRET_KEY))
 
 	if err != nil {
 		log.Panic(err)
 		return
 	}
 
-	return token, refreshToken, err
+	return token, refreshToken
 
 }
 
-func ValidateToken(signedToken string) (claims *SignedDetails, msg string) {
-	token, err := jwt.ParseWithClaims(
+func ValidateToken(signedToken string) (claims *SignedDetailes, msg string) {
+	token, err := jwt.ParseWithClaims(signedToken, &SignedDetailes{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(SECRET_KEY), nil
 
-		&SignedDetailes{},
-		func(token *jwt.Token) (interface{}, error) {
-			return []byte(SECRET_Key), nil
-
-		},
-	)
+	})
 
 	if err != nil {
 		msg = err.Error()
@@ -81,32 +88,35 @@ func ValidateToken(signedToken string) (claims *SignedDetails, msg string) {
 		return
 	}
 
-	if clams.ExpiresAt < time.Now().Local().Unix() {
+	if claims.ExpiresAt.Time.Before(time.Now()) {
 		msg = fmt.Sprintf("token is expired")
 		msg = err.Error()
 		return
-
 	}
-	return claim, msg
+
+	// if claims.ExpiresAt < time.Now().Local().Unix() {
+	// 	msg = fmt.Sprintf("token is expired")
+	// 	msg = err.Error()
+	// 	return
+
+	// }
+	return claims, msg
 
 }
 
 func UpdateAllTokens(signedToken string, signeRefreshToken string, usedId string) {
-	var ctx, cancle = context.WithTimeout(context.Background(), 100*time.Second)
+	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 
 	var updateObj primitive.D
 
 	updateObj = append(updateObj, bson.E{"token", signedToken})
-	updateObj = append(updateObj, bson.E{"refresh token", signedRefreshToken})
-
+	updateObj = append(updateObj, bson.E{"refresh token", signeRefreshToken})
 	Updated_at, _ := time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 	updateObj = append(updateObj, bson.E{"updated_at", Updated_at})
 
 	upsert := true
-	filter := bson.M{"user_id": userId}
-	opt := options.UpdateOptions{
-		Upset: &upert,
-	}
+	filter := bson.M{"user_id": usedId}
+	opt := options.UpdateOptions{Upsert: &upsert}
 
 	_, err := userCollection.UpdateOne(ctx, filter, bson.D{
 		{"$set", updateObj},

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	helper "experiment-golang-jwt-projct/helpers"
+	helper "github.com/sonu31/experiment-golang-jwt-projct/helpers"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,12 +20,18 @@ func Authenticate() gin.HandlerFunc {
 
 		}
 		claims, err := helper.ValidateToken(clinetToken)
+
 		if err != "" {
-			c.JSON(http.StatusInternalServerError, gin.H{"err", err})
+			c.JSON(http.StatusInternalServerError, gin.H{"err": err})
 			c.Abort()
 			return
-
 		}
+
+		// if err != "" {
+		// 	c.JSON(http.StatusInternalServerError, gin.H{"err", err})
+		// 	c.Abort()
+		// 	return
+
 		c.Set("email", claims.Email)
 		c.Set("first_name", claims.First_name)
 		c.Set("last_name", claims.Last_name)

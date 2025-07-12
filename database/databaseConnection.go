@@ -20,7 +20,7 @@ func DBinstance() *mongo.Client {
 
 	MongoDb := os.Getenv("MONGODB_URL")
 
-	client, err := mongo.NewClient(options.Clients().ApplyURI(MongoDb))
+	client, err := mongo.NewClient(options.Client().ApplyURI(MongoDb))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func DBinstance() *mongo.Client {
 
 }
 
-var Client *mongo.client = DBinstance()
+var Client *mongo.Client = DBinstance()
 
 func OpenCollection(client *mongo.Client, collectionName string) *mongo.Collection {
 	var colleciton *mongo.Collection = client.Database("cluster0").Collection(collectionName)

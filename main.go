@@ -1,14 +1,21 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/sonu31/experiment-golang-jwt-projct/routes"
 )
 
 func main() {
-	port = os.Getenv("PORT")
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	port := os.Getenv("PORT")
 
 	if port == "" {
 		port = "8000"
@@ -16,10 +23,10 @@ func main() {
 	}
 
 	router := gin.New()
-	router.User(gin.Logger())
+	router.Use(gin.Logger())
 
-	routes.AuthRouter(router)
-	routes.UserRouter(router)
+	routes.AuthRoutes(router)
+	routes.UserRoutes(router)
 
 	router.GET("api-1", func(c *gin.Context) {
 		c.JSON(200, gin.H{"success": "Access granted for api-1"})
