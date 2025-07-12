@@ -38,4 +38,16 @@ func main() {
 
 	})
 
+	log.Println("🚀 Server running at http://localhost:" + port)
+	router.Run(":" + port)
+
 }
+
+/* {
+"First_name":"Sonu",
+"Last_name":"Sharma",
+"Password":"sonu@1122",
+"Email":"sonuhjpkumar@gmail.com",
+"Phone":"873317110",
+"User_type":"ADMIN"
+} */
